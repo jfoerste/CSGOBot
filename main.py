@@ -4,6 +4,7 @@ import datetime
 from discord.ext import commands
 from discord import Embed, Game
 import traceback
+import sys
 
 
 headers = {}
@@ -121,7 +122,9 @@ def gen_embed(profile):
         embed.set_author(name="CSGO Profile Statistics")
         embed.add_field(name="❌ ERROR ❌", value="An unknown error occured.")
         print(traceback.print_exc())
+        sys.stdout.flush()
         print(e)
+        sys.stdout.flush()
 
     return embed
 
