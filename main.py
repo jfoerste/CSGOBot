@@ -68,7 +68,7 @@ def get_steam_api(endpoint, params):
 
 re_ID32 = re.compile("^STEAM_0:[01]:[0-9]{4,10}$")
 re_ID64 = re.compile("^https?://steamcommunity\\.com/profiles/([0-9]{17})/?$|^([0-9]{17})$")
-re_custom_URL = re.compile("^https?://steamcommunity\\.com/id/([a-zA-Z0-9/]+)$|(^[a-zA-Z0-9]+)$")
+re_custom_URL = re.compile("^https?://steamcommunity\\.com/id/([a-zA-Z0-9]+)/?$|(^[a-zA-Z0-9]+)$")
 
 
 def id32_to_id64(id32):
