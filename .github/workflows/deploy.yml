@@ -28,4 +28,4 @@
             USERNAME: ${{ secrets.USERNAME }}
             PORT: ${{ secrets.PORT }}
             KEY: ${{ secrets.SSHKEY }}
-            script: sudo systemctl restart csgobot
+            script: "sudo systemctl restart csgobot"
