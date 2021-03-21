@@ -100,7 +100,7 @@ def parse_id64(string):
 
 def get_stats(id):
     # TODO: Query data from steam web api instead of tracker.gg
-    # TODO: Cache results for 5 mins???
+    # TODO: Cache results for 5 mins??? Probably not when grabbing from steam api because of higher rate limit.
     global rate_limit_until
     if datetime.datetime.now() < rate_limit_until:
         raise APIError("rate_limit")
@@ -144,11 +144,11 @@ def result_embed(data, bans, id):
     Community: {'✅' if bans[2] == False else '❌'}
     """
 
-    embed = Embed(colour=8545008, url=web_page_url)
+    embed = Embed(colour=8545008)
     embed.description = f"**Profile: **[**{name}**]({profile_url})"
     embed.timestamp = datetime.datetime.utcnow()
     embed.set_footer(text="CSGO Profile Statistics")
-    embed.set_author(name="CSGO Profile Statistics")
+    embed.set_author(name="CSGO Profile Statistics", url=web_page_url)
     embed.set_thumbnail(url=thumbnail_url)
 
     embed.add_field(name="Kills:", value=stats["kills"]["displayValue"], inline=True)
@@ -163,20 +163,20 @@ def result_embed(data, bans, id):
 
 
 def err_embed(message):
-    embed = Embed(colour=16711680, url=web_page_url)
+    embed = Embed(colour=16711680)
     embed.timestamp = datetime.datetime.utcnow()
     embed.set_footer(text="CSGO Profile Statistics")
-    embed.set_author(name="CSGO Profile Statistics")
+    embed.set_author(name="CSGO Profile Statistics", url=web_page_url)
 
     embed.add_field(name="❌ ERROR ❌", value=f"{message}")
     return embed
 
 
 def info_embed():
-    embed = Embed(colour=255, url=web_page_url)
+    embed = Embed(colour=255)
     embed.timestamp = datetime.datetime.utcnow()
     embed.set_footer(text="CSGO Profile Statistics")
-    embed.set_author(name="CSGO Profile Statistics")
+    embed.set_author(name="CSGO Profile Statistics", url=web_page_url)
 
     embed.add_field(name="➡ ℹ ", value=f"{info_message}")
     return embed
