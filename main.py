@@ -34,7 +34,7 @@ class APIError(LookupError):
     """Error calling API"""
     cases = {
         "rate_limit": "**Rate limit hit! Please wait til the next minute and slow down your requests.**",
-        "CollectorResultStatus::NotFound": "**No user profile with that id or URL was found.**",
+        "CollectorResultStatus::NotFound": "**No user profile with that ID or URL was found.**",
         "CollectorResultStatus::Private": "**The player either hasn't played CSGO or their profile is private.**",
         "invalid_format": """**The profile identifier does not match one of the supported formats.\
         Please use any of the following:**
@@ -90,9 +90,9 @@ def custom_url_to_id64(string):
 def parse_id64(string):
     if re_ID32.fullmatch(string):
         return id32_to_id64(string)  # string is SteamID32
-    elif match := re_ID64.match(string):
+    elif match := re_ID64.fullmatch(string):
         return ''.join(filter(None, match.group(1, 2)))  # is SteamID64
-    elif match := re_custom_URL.match(string):
+    elif match := re_custom_URL.fullmatch(string):
         return custom_url_to_id64(''.join(filter(None, match.group(1, 2))))  # is custom url name
     else:
         raise(APIError("invalid_format"))
