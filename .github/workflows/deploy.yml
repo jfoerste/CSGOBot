@@ -19,7 +19,7 @@
             KEY: ${{ secrets.SSHKEY }}
           with:
             source: "."
-            target: "/home/csgobot/CSGOBot
+            target: "/home/csgobot/CSGOBot"
 
         - name: Restart system.d service
           uses: appleboy/ssh-action@master
