@@ -13,13 +13,15 @@ tracker_api_url = 'https://public-api.tracker.gg/v2/csgo/standard/profile/steam/
 profile_url_stub = 'http://steamcommunity.com/profiles/'
 steam_api_url = 'http://api.steampowered.com/ISteamUser/GetPlayerBans/v1/'
 
+web_page_url = "https://github.com/jfoerste/CSGOBot"
+
 STEAM_KEY = ''
 
 bot = commands.Bot(command_prefix='$')
 
 rate_limit_until = datetime.datetime.min
 
-info_message = """**To look up a players CSGO Statistics please use `$cs` followed by an ID or URL in one \
+info_message = """**To look up a players CSGO Statistics use `$cs` followed by an ID or URL in one \
 of the following forms:**
 steamID: `STEAM_0:0:139398065`
 steamID64: `76561198239061858`
@@ -142,7 +144,7 @@ def result_embed(data, bans, id):
     Community: {'✅' if bans[2] == False else '❌'}
     """
 
-    embed = Embed(colour=8545008)
+    embed = Embed(colour=8545008, url=web_page_url)
     embed.description = f"**Profile: **[**{name}**]({profile_url})"
     embed.timestamp = datetime.datetime.utcnow()
     embed.set_footer(text="CSGO Profile Statistics")
@@ -161,7 +163,7 @@ def result_embed(data, bans, id):
 
 
 def err_embed(message):
-    embed = Embed(colour=16711680)
+    embed = Embed(colour=16711680, url=web_page_url)
     embed.timestamp = datetime.datetime.utcnow()
     embed.set_footer(text="CSGO Profile Statistics")
     embed.set_author(name="CSGO Profile Statistics")
@@ -171,7 +173,7 @@ def err_embed(message):
 
 
 def info_embed():
-    embed = Embed(colour=255)
+    embed = Embed(colour=255, url=web_page_url)
     embed.timestamp = datetime.datetime.utcnow()
     embed.set_footer(text="CSGO Profile Statistics")
     embed.set_author(name="CSGO Profile Statistics")
