@@ -80,10 +80,12 @@ def get_bans(id):
 def gen_embed(profile):
     try:
         data = get_stats(profile)
-        bans = get_bans(data['platformInfo']['platformUserIdentifier'])
+        id = data['platformInfo']['platformUserIdentifier']
+
+        bans = get_bans(id)
 
         name = data['platformInfo']['platformUserHandle']
-        profile_url = profile_url_stub + data['platformInfo']['platformUserIdentifier']
+        profile_url = profile_url_stub + id
         thumbnail_url = data['platformInfo']['avatarUrl']
         stats = data["segments"][0]["stats"]
 
@@ -108,6 +110,7 @@ def gen_embed(profile):
         embed.add_field(name="Win%:", value=stats["wlPercentage"]["displayValue"], inline=True)
 
         embed.add_field(name="Reputation:", value=ban_str)
+
     except APIError as err:
         embed = Embed(colour=16711680)
         embed.timestamp = datetime.datetime.utcnow()
