@@ -12,7 +12,7 @@ To look up a players CSGO Statistics use `$cs` followed by an **ID** or **URL** 
 **customURL:** `http://steamcommunity.com/id/theheadshooter` or `theheadshooter`<br>
 **profileURL:** `http://steamcommunity.com/profiles/76561198239061858`<br>
 
-If you are not sure about these display this help message using `$cs` without any parameter.
+If you are not sure about these display this help message by using `$cs` without any parameter.
 ### Example: 
 
 ![](https://i.jfoe.de/GZyzaImV.png)
