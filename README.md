@@ -15,7 +15,7 @@ To look up a players CSGO Statistics use `$cs` followed by an **ID** or **URL** 
 If you are not sure about these display this help message by using `$cs` without any parameter.
 ### Example: 
 
-![](https://i.jfoe.de/GZyzaImV.png)
+![](https://i.jfoe.de/s2FS)
 
 ### Invite:
 
