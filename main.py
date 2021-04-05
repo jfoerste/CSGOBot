@@ -235,23 +235,19 @@ async def cs(ctx, *args):
         await ctx.reply(embed=embed)
 
 
+def load_env(name):
+    var = os.getenv(name)
+    if var:
+        return var
+    print(f"The environment variable {name} is missing!")
+    exit()
+
+
 if __name__ == '__main__':
-    TOKEN = os.getenv('TOKEN')
-    TRACKER_KEY = os.getenv('TRACKER_KEY')
-    STEAM_KEY = os.getenv('STEAM_KEY')
-    SENTRY_URL = os.getenv('SENTRY_URL')
-    if TOKEN is None:
-        print('The environment variable TOKEN is missing!')
-        exit()
-    elif TRACKER_KEY is None:
-        print('The environment variable TRACKER_KEY is missing!')
-        exit()
-    elif STEAM_KEY is None:
-        print('The environment variable STEAM_KEY is missing!')
-        exit()
-    elif SENTRY_URL is None:
-        print('The environment variable SENTRY_URL is missing!')
-        exit()
+    TOKEN = load_env('TOKEN')
+    TRACKER_KEY = load_env('TRACKER_KEY')
+    STEAM_KEY = load_env('STEAM_KEY')
+    SENTRY_URL = load_env('SENTRY_URL')
 
     headers = {'TRN-Api-Key': TRACKER_KEY}
     sentry_sdk.init(
