@@ -9,6 +9,7 @@ import re
 import sentry_sdk
 import logging
 from functools import wraps
+from cachetools import cached, TTLCache
 
 headers = {}
 
@@ -91,8 +92,9 @@ def id32_to_id64(id32):
     return str((universe << 56) | (1 << 52) | (1 << 32) | (int(parts[2]) << 1) | int(parts[1]))
 
 
+@cached(cache=TTLCache(maxsize=128, ttl=3600))
 def custom_url_to_id64(string):
-    with sentry_sdk.start_span(op="http", description="Call SteamAPI to convert custom URL to id64"):
+    with sentry_sdk.start_span(op="prep_http", description="Call SteamAPI to convert custom URL to id64"):
         r = get_steam_api("ISteamUser/ResolveVanityURL/v0001/", {"vanityurl": string})
 
         if r["response"]["success"] == 1:
@@ -113,8 +115,9 @@ def parse_id64(string):
             raise (APIError("invalid_format"))
 
 
+@cached(cache=TTLCache(maxsize=128, ttl=3600))
 def get_stats(id):
-    with sentry_sdk.start_span(op="http", description="Call Tracker API to get player stats"):
+    with sentry_sdk.start_span(op="prep_http", description="Call Tracker API to get player stats"):
         # TODO: Query data from steam web api instead of tracker.gg
         # TODO: Cache results for 5 mins??? Probably not when grabbing from steam api because of higher rate limit.
         global rate_limit_until
@@ -137,8 +140,9 @@ def get_stats(id):
         return r.json()["data"]
 
 
+@cached(cache=TTLCache(maxsize=128, ttl=3600))
 def get_bans(id):
-    with sentry_sdk.start_span(op="http", description="Call SteamAPI to get user ban status"):
+    with sentry_sdk.start_span(op="prep_http", description="Call SteamAPI to get user ban status"):
         r = get_steam_api("ISteamUser/GetPlayerBans/v1/", {"steamids": id})
 
         data = r["players"][0]
@@ -228,7 +232,8 @@ async def cs(ctx, *args):
             sys.stdout.flush()
             embed = err_embed("An unknown error occured.")
             logging.exception("Unknown Exception")
-    await ctx.reply(embed=embed)
+    with sentry_sdk.start_span(op="message", description="Send embed via discord API"):
+        await ctx.reply(embed=embed)
 
 
 if __name__ == '__main__':
