@@ -119,7 +119,6 @@ def parse_id64(string):
 def get_stats(id):
     with sentry_sdk.start_span(op="prep_http", description="Call Tracker API to get player stats"):
         # TODO: Query data from steam web api instead of tracker.gg
-        # TODO: Cache results for 5 mins??? Probably not when grabbing from steam api because of higher rate limit.
         global rate_limit_until
         if datetime.datetime.now() < rate_limit_until:
             raise APIError("rate_limit")
