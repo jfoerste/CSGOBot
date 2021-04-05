@@ -13,25 +13,23 @@ from cachetools import cached, TTLCache
 
 headers = {}
 
-tracker_api_url = 'https://public-api.tracker.gg/v2/csgo/standard/profile/steam/'
-profile_url_stub = 'http://steamcommunity.com/profiles/'
-steam_api_url = 'http://api.steampowered.com/ISteamUser/GetPlayerBans/v1/'
-
-web_page_url = "https://github.com/jfoerste/CSGOBot"
-
+TRACKER_API_URL = 'https://public-api.tracker.gg/v2/csgo/standard/profile/steam/'
+PROFILE_URL_STUB = 'http://steamcommunity.com/profiles/'
+WEB_PAGE_URL = "https://github.com/jfoerste/CSGOBot"
 STEAM_KEY = ''
-
-bot = commands.Bot(command_prefix='$')
 
 rate_limit_until = datetime.datetime.min
 
-info_message = """**To look up a players CSGO Statistics use `$cs` followed by an ID or URL in one \
+INFO_MESSAGE = """\
+**To look up a players CSGO Statistics use `$cs` followed by an ID or URL in one \
 of the following forms:**
 steamID: `STEAM_0:0:139398065`
 steamID64: `76561198239061858`
 customURL: `http://steamcommunity.com/id/theheadshooter` or `theheadshooter`
 profileURL: `http://steamcommunity.com/profiles/76561198239061858`
 """
+
+bot = commands.Bot(command_prefix='$')
 
 
 def async_sentry_transaction():
@@ -76,8 +74,7 @@ def get_steam_api(endpoint, params):
 
     if r.status_code == 200:
         return r.json()
-    else:
-        raise APIError("")
+    raise APIError("")
 
 
 re_ID32 = re.compile("^STEAM_0:[01]:[0-9]{4,10}$")
@@ -111,8 +108,7 @@ def parse_id64(string):
             return ''.join(filter(None, match.group(1, 2)))  # is SteamID64
         elif match := re_custom_URL.fullmatch(string):
             return custom_url_to_id64(''.join(filter(None, match.group(1, 2))))  # is custom url name
-        else:
-            raise (APIError("invalid_format"))
+        raise (APIError("invalid_format"))
 
 
 @cached(cache=TTLCache(maxsize=128, ttl=3600))
@@ -124,7 +120,7 @@ def get_stats(id):
             raise APIError("rate_limit")
 
         r = requests.get(
-            tracker_api_url + id,
+            TRACKER_API_URL + id,
             headers=headers
         )
 
@@ -153,24 +149,16 @@ def get_bans(id):
 
 
 def result_embed(data, bans, id):
-    name = data['platformInfo']['platformUserHandle']
-    profile_url = profile_url_stub + id
-    thumbnail_url = data['platformInfo']['avatarUrl']
-    stats = data["segments"][0]["stats"]
-
-    ban_str = f"""\
-    VAC: {'✅' if bans[0] is None else f'❌ Banned {bans[0]} days ago!'}
-    Trade: {'✅' if bans[1] == False else '❌'}
-    Community: {'✅' if bans[2] == False else '❌'}
-    """
-
+    # config and meta information
     embed = Embed(colour=8545008)
-    embed.description = f"**Profile: **[**{name}**]({profile_url})"
+    embed.description = f"**Profile: **[**{data['platformInfo']['platformUserHandle']}**]({PROFILE_URL_STUB + id})"
     embed.timestamp = datetime.datetime.utcnow()
     embed.set_footer(text="CSGO Profile Statistics")
-    embed.set_author(name="CSGO Profile Statistics", url=web_page_url)
-    embed.set_thumbnail(url=thumbnail_url)
+    embed.set_author(name="CSGO Profile Statistics", url=WEB_PAGE_URL)
+    embed.set_thumbnail(url=data['platformInfo']['avatarUrl'])
 
+    # content
+    stats = data["segments"][0]["stats"]
     embed.add_field(name="Kills:", value=stats["kills"]["displayValue"], inline=True)
     embed.add_field(name="Deaths:", value=stats["deaths"]["displayValue"], inline=True)
     embed.add_field(name="K/D:", value=stats["kd"]["displayValue"], inline=True)
@@ -178,7 +166,14 @@ def result_embed(data, bans, id):
     embed.add_field(name="Wins:", value=stats["wins"]["displayValue"], inline=True)
     embed.add_field(name="Win%:", value=stats["wlPercentage"]["displayValue"], inline=True)
 
+    # ban information
+    ban_str = f"""\
+        VAC: {'✅' if bans[0] is None else f'❌ Banned {bans[0]} days ago!'}
+        Trade: {'✅' if bans[1] == False else '❌'}
+        Community: {'✅' if bans[2] == False else '❌'}
+        """
     embed.add_field(name="Reputation:", value=ban_str)
+
     return embed
 
 
@@ -186,7 +181,7 @@ def err_embed(message):
     embed = Embed(colour=16711680)
     embed.timestamp = datetime.datetime.utcnow()
     embed.set_footer(text="CSGO Profile Statistics")
-    embed.set_author(name="CSGO Profile Statistics", url=web_page_url)
+    embed.set_author(name="CSGO Profile Statistics", url=WEB_PAGE_URL)
 
     embed.add_field(name="❌ ERROR ❌", value=f"{message}")
     return embed
@@ -196,9 +191,9 @@ def info_embed():
     embed = Embed(colour=255)
     embed.timestamp = datetime.datetime.utcnow()
     embed.set_footer(text="CSGO Profile Statistics")
-    embed.set_author(name="CSGO Profile Statistics", url=web_page_url)
+    embed.set_author(name="CSGO Profile Statistics", url=WEB_PAGE_URL)
 
-    embed.add_field(name="➡ ℹ ", value=f"{info_message}")
+    embed.add_field(name="➡ ℹ ", value=f"{INFO_MESSAGE}")
     return embed
 
 
