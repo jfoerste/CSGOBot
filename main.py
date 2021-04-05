@@ -8,6 +8,7 @@ import sys
 import re
 import sentry_sdk
 import logging
+from functools import wraps
 
 headers = {}
 
@@ -30,6 +31,16 @@ steamID64: `76561198239061858`
 customURL: `http://steamcommunity.com/id/theheadshooter` or `theheadshooter`
 profileURL: `http://steamcommunity.com/profiles/76561198239061858`
 """
+
+
+def async_sentry_transaction():
+    def wrapper(fn):
+        @wraps(fn)
+        async def wrapped(*args, **kwargs):
+            with sentry_sdk.start_transaction(op=fn.__name__, name="Command recognized"):
+                return await fn(*args, **kwargs)
+        return wrapped
+    return wrapper
 
 
 class APIError(LookupError):
@@ -81,57 +92,61 @@ def id32_to_id64(id32):
 
 
 def custom_url_to_id64(string):
-    r = get_steam_api("ISteamUser/ResolveVanityURL/v0001/", {"vanityurl": string})
+    with sentry_sdk.start_span(op="http", description="Call SteamAPI to convert custom URL to id64"):
+        r = get_steam_api("ISteamUser/ResolveVanityURL/v0001/", {"vanityurl": string})
 
-    if r["response"]["success"] == 1:
-        return r["response"]["steamid"]
-    else:
-        raise APIError("CollectorResultStatus::NotFound")
+        if r["response"]["success"] == 1:
+            return r["response"]["steamid"]
+        else:
+            raise APIError("CollectorResultStatus::NotFound")
 
 
 def parse_id64(string):
-    if re_ID32.fullmatch(string):
-        return id32_to_id64(string)  # string is SteamID32
-    elif match := re_ID64.fullmatch(string):
-        return ''.join(filter(None, match.group(1, 2)))  # is SteamID64
-    elif match := re_custom_URL.fullmatch(string):
-        return custom_url_to_id64(''.join(filter(None, match.group(1, 2))))  # is custom url name
-    else:
-        raise (APIError("invalid_format"))
+    with sentry_sdk.start_span(op="parse", description="Parse SteamID"):
+        if re_ID32.fullmatch(string):
+            return id32_to_id64(string)  # string is SteamID32
+        elif match := re_ID64.fullmatch(string):
+            return ''.join(filter(None, match.group(1, 2)))  # is SteamID64
+        elif match := re_custom_URL.fullmatch(string):
+            return custom_url_to_id64(''.join(filter(None, match.group(1, 2))))  # is custom url name
+        else:
+            raise (APIError("invalid_format"))
 
 
 def get_stats(id):
-    # TODO: Query data from steam web api instead of tracker.gg
-    # TODO: Cache results for 5 mins??? Probably not when grabbing from steam api because of higher rate limit.
-    global rate_limit_until
-    if datetime.datetime.now() < rate_limit_until:
-        raise APIError("rate_limit")
+    with sentry_sdk.start_span(op="http", description="Call Tracker API to get player stats"):
+        # TODO: Query data from steam web api instead of tracker.gg
+        # TODO: Cache results for 5 mins??? Probably not when grabbing from steam api because of higher rate limit.
+        global rate_limit_until
+        if datetime.datetime.now() < rate_limit_until:
+            raise APIError("rate_limit")
 
-    r = requests.get(
-        tracker_api_url + id,
-        headers=headers
-    )
+        r = requests.get(
+            tracker_api_url + id,
+            headers=headers
+        )
 
-    json = r.json()
+        json = r.json()
 
-    # print(r.headers)
-    if "X-RateLimit-Remaining-minute" in r.headers and int(r.headers["X-RateLimit-Remaining-minute"]) <= 1:
-        rate_limit_until = datetime.datetime.now().replace(second=0, microsecond=0) + datetime.timedelta(minutes=1)
+        # print(r.headers)
+        if "X-RateLimit-Remaining-minute" in r.headers and int(r.headers["X-RateLimit-Remaining-minute"]) <= 1:
+            rate_limit_until = datetime.datetime.now().replace(second=0, microsecond=0) + datetime.timedelta(minutes=1)
 
-    if "errors" in json:
-        raise APIError(json["errors"][0]["code"])
-    return r.json()["data"]
+        if "errors" in json:
+            raise APIError(json["errors"][0]["code"])
+        return r.json()["data"]
 
 
 def get_bans(id):
-    r = get_steam_api("ISteamUser/GetPlayerBans/v1/", {"steamids": id})
+    with sentry_sdk.start_span(op="http", description="Call SteamAPI to get user ban status"):
+        r = get_steam_api("ISteamUser/GetPlayerBans/v1/", {"steamids": id})
 
-    data = r["players"][0]
-    return (
-        None if data["VACBanned"] is False else data["DaysSinceLastBan"],
-        False if data["EconomyBan"] == "none" else True,
-        data["CommunityBanned"]
-    )
+        data = r["players"][0]
+        return (
+            None if data["VACBanned"] is False else data["DaysSinceLastBan"],
+            False if data["EconomyBan"] == "none" else True,
+            data["CommunityBanned"]
+        )
 
 
 def result_embed(data, bans, id):
@@ -190,7 +205,8 @@ async def on_ready():
     await bot.change_presence(activity=Game("$cs with steam ID or URL"))
 
 
-@bot.command()
+@bot.command(name="cs")
+@async_sentry_transaction()
 async def cs(ctx, *args):
     if len(args) == 0:
         embed = info_embed()
@@ -229,15 +245,14 @@ if __name__ == '__main__':
     elif STEAM_KEY is None:
         print('The environment variable STEAM_KEY is missing!')
         exit()
+    elif SENTRY_URL is None:
+        print('The environment variable SENTRY_URL is missing!')
+        exit()
 
     headers = {'TRN-Api-Key': TRACKER_KEY}
-
-    if SENTRY_URL is None:
-        print('The environment variable SENTRY_URL was not found, no events will be pushed to sentry!')
-    else:
-        sentry_sdk.init(
-            SENTRY_URL,
-            traces_sample_rate=1.0
-        )
+    sentry_sdk.init(
+        SENTRY_URL,
+        traces_sample_rate=1.0
+    )
 
     bot.run(TOKEN)
