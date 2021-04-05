@@ -6,6 +6,8 @@ from discord import Embed, Game
 import traceback
 import sys
 import re
+import sentry_sdk
+import logging
 
 headers = {}
 
@@ -95,7 +97,7 @@ def parse_id64(string):
     elif match := re_custom_URL.fullmatch(string):
         return custom_url_to_id64(''.join(filter(None, match.group(1, 2))))  # is custom url name
     else:
-        raise(APIError("invalid_format"))
+        raise (APIError("invalid_format"))
 
 
 def get_stats(id):
@@ -204,11 +206,12 @@ async def cs(ctx, *args):
         except APIError as err:
             embed = err_embed(err.message)
         except Exception as e:
-            print(traceback.print_exc())
+            # print(traceback.print_exc())
             sys.stdout.flush()
-            print(e)
+            # print(e)
             sys.stdout.flush()
             embed = err_embed("An unknown error occured.")
+            logging.exception("Unknown Exception")
     await ctx.reply(embed=embed)
 
 
@@ -216,6 +219,7 @@ if __name__ == '__main__':
     TOKEN = os.getenv('TOKEN')
     TRACKER_KEY = os.getenv('TRACKER_KEY')
     STEAM_KEY = os.getenv('STEAM_KEY')
+    SENTRY_URL = os.getenv('SENTRY_URL')
     if TOKEN is None:
         print('The environment variable TOKEN is missing!')
         exit()
@@ -225,6 +229,15 @@ if __name__ == '__main__':
     elif STEAM_KEY is None:
         print('The environment variable STEAM_KEY is missing!')
         exit()
+
+    headers = {'TRN-Api-Key': TRACKER_KEY}
+
+    if SENTRY_URL is None:
+        print('The environment variable SENTRY_URL was not found, no events will be pushed to sentry!')
     else:
-        headers = {'TRN-Api-Key': TRACKER_KEY}
+        sentry_sdk.init(
+            SENTRY_URL,
+            traces_sample_rate=1.0
+        )
+
     bot.run(TOKEN)
