@@ -1,4 +1,2 @@
 discord.py>=1.6.0
 requests~=2.25.1
-sentry_sdk
-cachetools>=4.2.1
