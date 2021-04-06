@@ -14,6 +14,7 @@
             image-name: csgobot-api # Provide Docker image name
             image-tag: head # Provide Docker image tag
             dockerfile: ./api/Dockerfile
+            build-context: ./api
 
         - name: Build and Publish BOT image
           uses: VaultVulp/gp-docker-action@1.1.7
@@ -22,3 +23,4 @@
             image-name: csgobot-bot # Provide Docker image name
             image-tag: head # Provide Docker image tag
             dockerfile: ./bot/Dockerfile
+            build-context: ./bot
