@@ -13,12 +13,8 @@ from cachetools import cached, TTLCache
 
 headers = {}
 
-TRACKER_API_URL = 'https://public-api.tracker.gg/v2/csgo/standard/profile/steam/'
 PROFILE_URL_STUB = 'http://steamcommunity.com/profiles/'
 WEB_PAGE_URL = "https://github.com/jfoerste/CSGOBot"
-STEAM_KEY = ''
-
-rate_limit_until = datetime.datetime.min
 
 INFO_MESSAGE = """\
 **To look up a players CSGO Statistics use `$cs` followed by an ID or URL in one \
@@ -32,14 +28,14 @@ profileURL: `http://steamcommunity.com/profiles/76561198239061858`
 bot = commands.Bot(command_prefix='$')
 
 
-def async_sentry_transaction():
-    def wrapper(fn):
-        @wraps(fn)
-        async def wrapped(*args, **kwargs):
-            with sentry_sdk.start_transaction(op=fn.__name__, name="Command recognized"):
-                return await fn(*args, **kwargs)
-        return wrapped
-    return wrapper
+#def async_sentry_transaction():
+#    def wrapper(fn):
+#        @wraps(fn)
+#        async def wrapped(*args, **kwargs):
+#            with sentry_sdk.start_transaction(op=fn.__name__, name="Command recognized"):
+#                return await fn(*args, **kwargs)
+#        return wrapped
+#    return wrapper
 
 
 class APIError(LookupError):
@@ -91,61 +87,61 @@ def id32_to_id64(id32):
 
 @cached(cache=TTLCache(maxsize=128, ttl=3600))
 def custom_url_to_id64(string):
-    with sentry_sdk.start_span(op="prep_http", description="Call SteamAPI to convert custom URL to id64"):
-        r = get_steam_api("ISteamUser/ResolveVanityURL/v0001/", {"vanityurl": string})
+    # with sentry_sdk.start_span(op="prep_http", description="Call SteamAPI to convert custom URL to id64"):
+    r = get_steam_api("ISteamUser/ResolveVanityURL/v0001/", {"vanityurl": string})
 
-        if r["response"]["success"] == 1:
-            return r["response"]["steamid"]
-        else:
-            raise APIError("CollectorResultStatus::NotFound")
+    if r["response"]["success"] == 1:
+        return r["response"]["steamid"]
+    else:
+        raise APIError("CollectorResultStatus::NotFound")
 
 
 def parse_id64(string):
-    with sentry_sdk.start_span(op="parse", description="Parse SteamID"):
-        if re_ID32.fullmatch(string):
-            return id32_to_id64(string)  # string is SteamID32
-        elif match := re_ID64.fullmatch(string):
-            return ''.join(filter(None, match.group(1, 2)))  # is SteamID64
-        elif match := re_custom_URL.fullmatch(string):
-            return custom_url_to_id64(''.join(filter(None, match.group(1, 2))))  # is custom url name
-        raise (APIError("invalid_format"))
+    # with sentry_sdk.start_span(op="parse", description="Parse SteamID"):
+    if re_ID32.fullmatch(string):
+        return id32_to_id64(string)  # string is SteamID32
+    elif match := re_ID64.fullmatch(string):
+        return ''.join(filter(None, match.group(1, 2)))  # is SteamID64
+    elif match := re_custom_URL.fullmatch(string):
+        return custom_url_to_id64(''.join(filter(None, match.group(1, 2))))  # is custom url name
+    raise (APIError("invalid_format"))
 
 
 @cached(cache=TTLCache(maxsize=128, ttl=3600))
 def get_stats(id):
-    with sentry_sdk.start_span(op="prep_http", description="Call Tracker API to get player stats"):
-        # TODO: Query data from steam web api instead of tracker.gg
-        global rate_limit_until
-        if datetime.datetime.now() < rate_limit_until:
-            raise APIError("rate_limit")
+    # with sentry_sdk.start_span(op="prep_http", description="Call Tracker API to get player stats"):
+    # TODO: Query data from steam web api instead of tracker.gg
+    global rate_limit_until
+    if datetime.datetime.now() < rate_limit_until:
+        raise APIError("rate_limit")
 
-        r = requests.get(
-            TRACKER_API_URL + id,
-            headers=headers
-        )
+    r = requests.get(
+        TRACKER_API_URL + id,
+        headers=headers
+    )
 
-        json = r.json()
+    json = r.json()
 
-        # print(r.headers)
-        if "X-RateLimit-Remaining-minute" in r.headers and int(r.headers["X-RateLimit-Remaining-minute"]) <= 1:
-            rate_limit_until = datetime.datetime.now().replace(second=0, microsecond=0) + datetime.timedelta(minutes=1)
+    # print(r.headers)
+    if "X-RateLimit-Remaining-minute" in r.headers and int(r.headers["X-RateLimit-Remaining-minute"]) <= 1:
+        rate_limit_until = datetime.datetime.now().replace(second=0, microsecond=0) + datetime.timedelta(minutes=1)
 
-        if "errors" in json:
-            raise APIError(json["errors"][0]["code"])
-        return r.json()["data"]
+    if "errors" in json:
+        raise APIError(json["errors"][0]["code"])
+    return r.json()["data"]
 
 
 @cached(cache=TTLCache(maxsize=128, ttl=3600))
 def get_bans(id):
-    with sentry_sdk.start_span(op="prep_http", description="Call SteamAPI to get user ban status"):
-        r = get_steam_api("ISteamUser/GetPlayerBans/v1/", {"steamids": id})
+    # with sentry_sdk.start_span(op="prep_http", description="Call SteamAPI to get user ban status"):
+    r = get_steam_api("ISteamUser/GetPlayerBans/v1/", {"steamids": id})
 
-        data = r["players"][0]
-        return (
-            None if data["VACBanned"] is False else data["DaysSinceLastBan"],
-            False if data["EconomyBan"] == "none" else True,
-            data["CommunityBanned"]
-        )
+    data = r["players"][0]
+    return (
+        None if data["VACBanned"] is False else data["DaysSinceLastBan"],
+        False if data["EconomyBan"] == "none" else True,
+        data["CommunityBanned"]
+    )
 
 
 def result_embed(data, bans, id):
@@ -204,7 +200,7 @@ async def on_ready():
 
 
 @bot.command(name="cs")
-@async_sentry_transaction()
+# @async_sentry_transaction()
 async def cs(ctx, *args):
     if len(args) == 0:
         embed = info_embed()
@@ -245,9 +241,9 @@ if __name__ == '__main__':
     SENTRY_URL = load_env('SENTRY_URL')
 
     headers = {'TRN-Api-Key': TRACKER_KEY}
-    sentry_sdk.init(
-        SENTRY_URL,
-        traces_sample_rate=1.0
-    )
+    # sentry_sdk.init(
+    #     SENTRY_URL,
+    #     traces_sample_rate=1.0
+    # )
 
     bot.run(TOKEN)
