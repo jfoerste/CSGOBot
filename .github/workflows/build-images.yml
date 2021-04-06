@@ -67,4 +67,4 @@
             USERNAME: ${{ secrets.USERNAME }}
             PORT: ${{ secrets.PORT }}
             KEY: ${{ secrets.SSHKEY }}
-            script: cd /home/csgobot && echo "${{ secrets.GITHUB_TOKEN }}" docker login https://docker.pkg.github.com -u jfoerste --password-stdin && docker-compose up --build -d
+            script: cd /home/csgobot && echo "${{ secrets.GITHUB_TOKEN }}" | docker login https://docker.pkg.github.com -u jfoerste --password-stdin && docker-compose up --build -d
