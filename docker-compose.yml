@@ -1,14 +1,14 @@
 version: "3.9"
 services:
   api:
-    image: docker.pkg.github.com/jfoerste/csgobot/csgobot-api:head
+    image: docker.pkg.github.com/jfoerste/csgobot/csgobot-api:latest
     restart: always
     build: ./api
     environment:
       - TRACKER_KEY
       - STEAM_KEY
   bot:
-    image: docker.pkg.github.com/jfoerste/csgobot/csgobot-bot:head
+    image: docker.pkg.github.com/jfoerste/csgobot/csgobot-bot:latest
     restart: always
     build: ./bot
     environment:
