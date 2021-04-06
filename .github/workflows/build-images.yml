@@ -1,0 +1,24 @@
+  on: push
+  jobs:
+    build-and-publish-head:
+      runs-on: ubuntu-latest
+      if: github.ref == 'refs/heads/develop' # Running this job only for develop branch
+
+      steps:
+        - uses: actions/checkout@v2 # Checking out the repo
+
+        - name: Build and Publish API image
+          uses: VaultVulp/gp-docker-action@1.1.7
+          with:
+            github-token: ${{ secrets.GITHUB_TOKEN }} # Provide GITHUB_TOKEN to login into the GitHub Packages
+            image-name: csgobot-api # Provide Docker image name
+            image-tag: head # Provide Docker image tag
+            build-context: "./api"
+
+        - name: Build and Publish BOT image
+          uses: VaultVulp/gp-docker-action@1.1.7
+          with:
+            github-token: ${{ secrets.GITHUB_TOKEN }} # Provide GITHUB_TOKEN to login into the GitHub Packages
+            image-name: csgobot-bot # Provide Docker image name
+            image-tag: head # Provide Docker image tag
+            build-context: ./bot
