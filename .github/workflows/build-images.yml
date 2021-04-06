@@ -13,7 +13,7 @@
             github-token: ${{ secrets.GITHUB_TOKEN }} # Provide GITHUB_TOKEN to login into the GitHub Packages
             image-name: csgobot-api # Provide Docker image name
             image-tag: head # Provide Docker image tag
-            build-context: ./api
+            dockerfile: ./api/Dockerfile
 
         - name: Build and Publish BOT image
           uses: VaultVulp/gp-docker-action@1.1.7
@@ -21,4 +21,4 @@
             github-token: ${{ secrets.GITHUB_TOKEN }} # Provide GITHUB_TOKEN to login into the GitHub Packages
             image-name: csgobot-bot # Provide Docker image name
             image-tag: head # Provide Docker image tag
-            build-context: ./bot
+            dockerfile: ./bot/Dockerfile
