@@ -1,6 +1,6 @@
 # CSGOBot
 
-![build](https://github.com/jfoerste/CSGOBot/actions/workflows/deploy.yml/badge.svg)
+![build](https://github.com/jfoerste/CSGOBot/actions/workflows/build-images.yml/badge.svg)
 
 A Discord bot which shows a quick overview of CSGO player statistics as well as ban information.
 
