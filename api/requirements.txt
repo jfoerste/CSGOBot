@@ -1,0 +1,4 @@
+requests~=2.25.1
+cachetools>=4.2.1
+flask>=1.1.2
+Flask-JSON>=0.3.4
